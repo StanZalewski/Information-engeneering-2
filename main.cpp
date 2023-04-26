@@ -1,77 +1,72 @@
-
+//PREVIOUS EXERCISE
+#include <SFML/Window.hpp>
+#include <SFML/Graphics.hpp>
+#include <vector>
 #include <iostream>
-#include <memory>
-using namespace std;
 
-class Vehicle {
+void create_shapes(std::vector<std::unique_ptr<sf::Drawable>> &shapes_vec) {
+    // create some shapes
+    std::unique_ptr<sf::CircleShape> circle = std::make_unique<sf::CircleShape>(100.0);
+    circle->setPosition(100.0, 300.0);
+    circle->setFillColor(sf::Color(100, 250, 50));
+    shapes_vec.emplace_back(std::move(circle));
 
-public:
-    std::string name() { return name_; }
-    int number_of_wheels() { return number_of_wheels_; }
-    std::string propulsion_type() { return propulsion_type_; }
-    double max_speed() { return max_speed_; }
+    std::unique_ptr<sf::ConvexShape> triangle = std::make_unique<sf::ConvexShape>(3);
+    triangle->setPoint(0, sf::Vector2f(0.0, 0.0));
+    triangle->setPoint(1, sf::Vector2f(0.0, 100.0));
+    triangle->setPoint(2, sf::Vector2f(140.0, 40.0));
+    triangle->setOutlineColor(sf::Color::Red);
+    triangle->setOutlineThickness(5);
+    triangle->setPosition(600.0, 100.0);
+    shapes_vec.emplace_back(std::move(triangle));
 
-    virtual ~Vehicle() = default;
-
-protected:
-    Vehicle(const std::string &name, int number_of_wheels,
-            const std::string &propulsion_type, double max_speed)
-        : name_(name), number_of_wheels_(number_of_wheels),
-        propulsion_type_(propulsion_type), max_speed_(max_speed) {}
-
-    std::string name_;
-    int number_of_wheels_;
-    std::string propulsion_type_;
-    double max_speed_;
-};
-
-class Bike : public Vehicle {
-
-public:
-    Bike() : Vehicle("Bike", 2, "Muscles", 30) {}
-};
-
-class Car : public Vehicle {
-
-public:
-    Car(const std::string &name, const std::string &propulsion_type,
-        double max_speed, bool has_abs)
-        : Vehicle(name, 4, propulsion_type, max_speed),
-        has_abs_(has_abs) {}
-
-    bool has_abs() { return has_abs_; }
-
-private:
-    bool has_abs_;
-};
-
-class Tractor : public Vehicle{
-
-public:
-    Tractor(const std::string &name,int number_of_wheels,  const std::string &propulsion_type,  int max_speed,  int max_horsepower, bool has_front_loader )
-        : Vehicle(name, 4, "diesel engine",max_speed), max_horsepower_(max_horsepower), has_front_loader_(has_front_loader){}
-
-    int max_horsepower () {
-        return max_horsepower_; }
-    int has_front_loader (){
-        return has_front_loader_;}
-
-private:
-    int max_horsepower_;
-    bool has_front_loader_;
-};
-
-int main()
-{
-    std::unique_ptr<Vehicle> skoda_superb_as_vehicle = std::make_unique<Car>(
-        "Skoda Superb", "Gasoline", 200, true);
-
-    Car *car = dynamic_cast<Car *>(skoda_superb_as_vehicle.get());
-    std::cout << "Name: " << skoda_superb_as_vehicle->name() << std::endl;
+    std::unique_ptr<sf::RectangleShape> rectangle = std::make_unique<sf::RectangleShape>(sf::Vector2f(120.0, 60.0));
+    rectangle->setPosition(500.0, 400.0);
+    rectangle->setFillColor(sf::Color(100, 50, 250));
+    shapes_vec.emplace_back(std::move(rectangle));
 
 
-    std::cout << "Has ABS: " << car->has_abs() << std::endl;
+}
+
+
+
+
+int main() {
+    // create the window
+    sf::RenderWindow window(sf::VideoMode(800, 600), "My window");
+    // creating vector to stre different shapes
+    std::vector<std::unique_ptr<sf::Drawable>> shapes;
+
+    create_shapes(shapes);
+
+
+
+
+
+
+    // run the program as long as the window is open
+    while (window.isOpen()) {
+        // check all the window's events that were triggered since the last iteration of the loop
+        sf::Event event;
+        while (window.pollEvent(event)) {
+            // "close requested" event: we close the window
+            if (event.type == sf::Event::Closed)
+                window.close();
+        }
+
+
+
+        // clear the window with black color
+        window.clear(sf::Color::Black);
+
+        // draw everything here...
+        for(auto &s : shapes) {
+            window.draw(*s);
+        }
+
+        // end the current frame
+        window.display();
+    }
 
     return 0;
 }
-
