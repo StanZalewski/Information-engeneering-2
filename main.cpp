@@ -1,170 +1,77 @@
-#include <SFML/Window.hpp>
-#include <SFML/Graphics.hpp>
-#include <iostream>
-#include <cstdlib>
-#include <vector>
-#include <string>
-#include <random>
 
+#include <iostream>
+#include <memory>
 using namespace std;
 
-
-class CustomRectangleShape : public sf::RectangleShape {
+class Vehicle {
 
 public:
-    CustomRectangleShape(const sf::Vector2f &size, const sf::Vector2f &position)
-        : sf::RectangleShape(size){
-        setPosition(position);
-    }
+    std::string name() { return name_; }
+    int number_of_wheels() { return number_of_wheels_; }
+    std::string propulsion_type() { return propulsion_type_; }
+    double max_speed() { return max_speed_; }
 
-    int x_velocity(){
-        return x_velocity_;
-    }
-    int y_velocity(){
-        return y_velocity_;
-    }
-    int rotation(){
-        return rotation_;
-    }
+    virtual ~Vehicle() = default;
 
-    void setSpeed(int vel_x, int vel_y, int rot){
-        x_velocity_=vel_x;
-        y_velocity_=vel_y;
-        rotation_=rot;
-    }
+protected:
+    Vehicle(const std::string &name, int number_of_wheels,
+            const std::string &propulsion_type, double max_speed)
+        : name_(name), number_of_wheels_(number_of_wheels),
+        propulsion_type_(propulsion_type), max_speed_(max_speed) {}
 
-
-    void setBounds(int left, int right, int top, int bottom){
-        left_=left;
-        right_=right;
-        top_=top;
-        bottom_=bottom;
-
-    }
-
-    void setIndex(bool index){
-        current_in_use = index;
-        std::cout<<index<<std::endl;
-    }
-
-    int getIndex(){
-        return current_in_use;
-    }
-
-    void moveInDirection(const sf::Time &elapsed, const sf::Keyboard::Key &key){
-
-        sf::Vector2f position=getPosition();
-        if (getFillColor()==sf::Color::Red && key==sf::Keyboard::A){
-            position.x -= x_velocity_*elapsed.asSeconds();
-            position.y = position.y;
-            setPosition(position);
-        }
-        if (getFillColor()==sf::Color::Red && key==sf::Keyboard::D){
-            position.x += x_velocity_*elapsed.asSeconds();
-            position.y = position.y;
-            setPosition(position);
-        }
-        if (getFillColor()==sf::Color::Red && key==sf::Keyboard::W){
-            position.x =position.x;
-            position.y -= y_velocity_*elapsed.asSeconds();
-            setPosition(position);
-        }
-        if (getFillColor()==sf::Color::Red && key==sf::Keyboard::S){
-            position.x = position.x;
-            position.y += y_velocity_*elapsed.asSeconds();
-            setPosition(position);
-        }
-    }
-
-private:
-    int x_velocity_;
-    int y_velocity_;
-    int rotation_;
-
-    int left_,right_,top_,bottom_;
-
-    bool current_in_use;
-
-
-
+    std::string name_;
+    int number_of_wheels_;
+    std::string propulsion_type_;
+    double max_speed_;
 };
 
-int main() {
-    sf::Clock clock;
+class Bike : public Vehicle {
 
-    // create the window
-    sf::RenderWindow window(sf::VideoMode(1000, 800), "My window");
+public:
+    Bike() : Vehicle("Bike", 2, "Muscles", 30) {}
+};
 
-    // for loop to create 15 rectangles in random spots
-    sf::Vector2f size(120.0, 60.0);
-    std::vector<CustomRectangleShape> rectangles;
-    for (int i = 0; i < 15; i++) {
-        sf::Vector2f size(120.0, 60.0);
-        sf::Vector2f position(std::rand() % (window.getSize().x - 120), std::rand() % (window.getSize().y - 60));
-        rectangles.emplace_back(CustomRectangleShape(size, position));
-    }
-    for (auto &rec : rectangles) {
-        rec.setFillColor(sf::Color::Green);
-        rec.setBounds(0, window.getSize().x, 0, window.getSize().y);
-        rec.setSpeed(500, 500, 500);
-    }
+class Car : public Vehicle {
 
-    // run the program as long as the window is open
-    while (window.isOpen()) {
-        // check all the window's events that were triggered since the last iteration of the loop
-        sf::Event event;
-        while (window.pollEvent(event)) {
-            // "close requested" event: we close the window
-            if (event.type == sf::Event::Closed) {
-                window.close();
-            }
-            if (event.type == sf::Event::MouseButtonPressed) {
-                // check if mouse click is inside the rectangle
-                for (int i = 0; i < 15; i++) {
-                    if (rectangles[i].getGlobalBounds().contains(sf::Vector2f(event.mouseButton.x, event.mouseButton.y))) {
-                        for (auto &r : rectangles) {
-                            r.setFillColor(sf::Color::Green);
-                        }
-                        // change the rectangle color to red
-                        rectangles[i].setFillColor(sf::Color::Red);
-                        rectangles[i].setIndex(i);
-                        break;
-                    }
-                }
-            }
-        }
+public:
+    Car(const std::string &name, const std::string &propulsion_type,
+        double max_speed, bool has_abs)
+        : Vehicle(name, 4, propulsion_type, max_speed),
+        has_abs_(has_abs) {}
 
-        // move the rectangles in the selected direction
-        for (auto &rec : rectangles) {
-            if (rec.getIndex()==true){
-                if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A)){
-                    rec.moveInDirection(clock.restart(), sf::Keyboard::Key::A);
-                }
-                if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D)){
-                    rec.moveInDirection(clock.restart(), sf::Keyboard::Key::D);
-                }
-                if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W)){
-                    rec.moveInDirection(clock.restart(), sf::Keyboard::Key::W);
-                }
-                if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S)){
-                    rec.moveInDirection(clock.restart(), sf::Keyboard::Key::S);
-                }
-            }
-        }
+    bool has_abs() { return has_abs_; }
 
-        // clear the window with black color
-        window.clear(sf::Color::Black);
+private:
+    bool has_abs_;
+};
 
-        // draw everything here...
-        for (auto &rec : rectangles) {
-            window.draw(rec);
-        }
+class Tractor : public Vehicle{
 
-        // end the current frame
-        window.display();
-    }
+public:
+    Tractor(const std::string &name,int number_of_wheels,  const std::string &propulsion_type,  int max_speed,  int max_horsepower, bool has_front_loader )
+        : Vehicle(name, 4, "diesel engine",max_speed), max_horsepower_(max_horsepower), has_front_loader_(has_front_loader){}
+
+    int max_horsepower () {
+        return max_horsepower_; }
+    int has_front_loader (){
+        return has_front_loader_;}
+
+private:
+    int max_horsepower_;
+    bool has_front_loader_;
+};
+
+int main()
+{
+    std::unique_ptr<Vehicle> skoda_superb_as_vehicle = std::make_unique<Car>(
+        "Skoda Superb", "Gasoline", 200, true);
+
+    Car *car = dynamic_cast<Car *>(skoda_superb_as_vehicle.get());
+    std::cout << "Name: " << skoda_superb_as_vehicle->name() << std::endl;
+
+
+    std::cout << "Has ABS: " << car->has_abs() << std::endl;
 
     return 0;
 }
-
 
