@@ -1,71 +1,159 @@
-
+#include <SFML/Window.hpp>
+#include <SFML/Graphics.hpp>
 #include <iostream>
+#include <cstdlib>
+#include <vector>
+#include <string>
 
 using namespace std;
 
-class Vehicle {
+
+class CustomRectangleShape : public sf::RectangleShape {
 
 public:
-    std::string name() { return name_; }
-    int number_of_wheels() { return number_of_wheels_; }
-    std::string propulsion_type() { return propulsion_type_; }
-    double max_speed() { return max_speed_; }
+    CustomRectangleShape(const sf::Vector2f &size, const sf::Vector2f &position)
+        : sf::RectangleShape(size){
+        setPosition(position);
+    }
 
-protected:
-    Vehicle(const std::string &name, int number_of_wheels,
-            const std::string &propulsion_type, double max_speed)
-        : name_(name), number_of_wheels_(number_of_wheels),
-        propulsion_type_(propulsion_type), max_speed_(max_speed) {}
+    int x_velocity(){
+        return x_velocity_;
+    }
+    int y_velocity(){
+        return y_velocity_;
+    }
+    int rotation(){
+        return rotation_;
+    }
 
-    std::string name_;
-    int number_of_wheels_;
-    std::string propulsion_type_;
-    double max_speed_;
-};
+    void setSpeed(int vel_x, int vel_y, int rot){
+        x_velocity_=vel_x;
+        y_velocity_=vel_y;
+        rotation_=rot;
+    }
 
-class Bike : public Vehicle {
+    void animate(const sf::Time &elapsed){
+        sf::Vector2f position = getPosition();
+        position.x += x_velocity_*elapsed.asSeconds();
+        position.y += y_velocity_*elapsed.asSeconds();
+        setPosition(position);
 
-public:
-    Bike() : Vehicle("Bike", 2, "Muscles", 30) {}
-};
+        float rotation =getRotation();
+        rotation+= rotation_ * elapsed.asSeconds();
+        setRotation(rotation);
 
-class Car : public Vehicle {
+        bounce();
 
-public:
-    Car(const std::string &name, const std::string &propulsion_type,
-        double max_speed, bool has_abs)
-        : Vehicle(name, 4, propulsion_type, max_speed),
-        has_abs_(has_abs) {}
 
-    bool has_abs() { return has_abs_; }
+    }
+
+    void setBounds(int left, int right, int top, int bottom){
+        left_=left;
+        right_=right;
+        top_=top;
+        bottom_=bottom;
+
+    }
 
 private:
-    bool has_abs_;
+    int x_velocity_;
+    int y_velocity_;
+    int rotation_;
+
+    int left_,right_,top_,bottom_;
+
+
+    void bounce(){
+        sf::Vector2f position= getPosition();
+        if (position.x<=left_){
+            x_velocity_=abs(x_velocity_);
+        }
+        if (position.x>=right_){
+            x_velocity_=-abs(x_velocity_);
+        }
+        if (position.y<=top_){
+            y_velocity_=abs(y_velocity_);
+        }
+        if (position.y>=bottom_){
+            y_velocity_=-abs(y_velocity_);
+        }
+    }
+
+
 };
 
-class Tractor : public Vehicle{
+int main() {
+    // create the window
+    sf::RenderWindow window(sf::VideoMode(1000, 800), "My window");
 
-public:
-    Tractor(const std::string &name,int number_of_wheels,  const std::string &propulsion_type,  int max_speed,  int max_horsepower, bool has_front_loader )
-    : Vehicle(name, 4, "diesel engine",max_speed), max_horsepower_(max_horsepower), has_front_loader_(has_front_loader){}
+    // create some shapes
+    sf::CircleShape circle(100.0);
+    circle.setPosition(100.0, 300.0);
+    circle.setFillColor(sf::Color(100, 250, 50));
 
-    int max_horsepower () {
-        return max_horsepower_; }
-    int has_front_loader (){
-        return has_front_loader_;}
 
-    private:
-    int max_horsepower_;
-    bool has_front_loader_;
-};
+    sf::Vector2f size(120.0, 60.0);
+    sf::Vector2f position(120.0, 60.0);
+    CustomRectangleShape rectangle(size, position);
+    rectangle.setFillColor(sf::Color(100, 50, 250));
+    rectangle.setSpeed(100, 150, 10);
+    rectangle.setBounds(0, window.getSize().x, 0, window.getSize().y);
 
-int main()
-{
-    Car passat("Volkswagen Passat", "Diesel", 200, true);
-    std::cout << "Name: " << passat.name() << std::endl;
-    std::cout << "Has ABS: " << passat.has_abs() << std::endl;
+    sf::ConvexShape triangle;
+    triangle.setPointCount(3);
+    triangle.setPoint(0, sf::Vector2f(0.0, 0.0));
+    triangle.setPoint(1, sf::Vector2f(0.0, 100.0));
+    triangle.setPoint(2, sf::Vector2f(140.0, 40.0));
+    triangle.setOutlineColor(sf::Color::Red);
+    triangle.setOutlineThickness(5);
+    triangle.setPosition(600.0, 100.0);
 
-    Tractor john_deere("John Deere 2403F",4,"Diesel", 100, 450,false);
-    std::cout<< "Name: "<< john_deere.name()<<" Nr of wheels: "<<john_deere.number_of_wheels()<<" what propulsion "<<john_deere.propulsion_type()<<std::endl;
+    sf::Clock clock;
+
+
+
+
+    // run the program as long as the window is open
+    while (window.isOpen()) {
+
+
+
+
+        // check all the window's events that were triggered since the last iteration of the loop
+        sf::Event event;
+        while (window.pollEvent(event)) {
+            // "close requested" event: we close the window
+            if (event.type == sf::Event::Closed)
+                window.close();
+        }
+
+        if(sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
+        {
+            std::cout << "Holding up button" << std::endl;
+        }
+
+        if(sf::Mouse::isButtonPressed(sf::Mouse::Middle))
+        {
+            std::cout << "Holding middle mouse button" << std::endl;
+        }
+
+        // clear the window with black color
+        window.clear(sf::Color::Black);
+
+        sf::Time elapsed = clock.restart();
+
+        rectangle.animate(elapsed);
+
+
+        // draw everything here...
+        window.draw(circle);
+        window.draw(rectangle);
+        window.draw(triangle);
+
+
+        // end the current frame
+        window.display();
+    }
+
     return 0;
 }
