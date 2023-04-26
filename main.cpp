@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <vector>
 #include <string>
+#include <random>
 
 using namespace std;
 
@@ -32,20 +33,6 @@ public:
         rotation_=rot;
     }
 
-    void animate(const sf::Time &elapsed){
-        sf::Vector2f position = getPosition();
-        position.x += x_velocity_*elapsed.asSeconds();
-        position.y += y_velocity_*elapsed.asSeconds();
-        setPosition(position);
-
-        float rotation =getRotation();
-        rotation+= rotation_ * elapsed.asSeconds();
-        setRotation(rotation);
-
-        bounce();
-
-
-    }
 
     void setBounds(int left, int right, int top, int bottom){
         left_=left;
@@ -55,6 +42,40 @@ public:
 
     }
 
+    void setIndex(bool index){
+        current_in_use = index;
+        std::cout<<index<<std::endl;
+    }
+
+    int getIndex(){
+        return current_in_use;
+    }
+
+    void moveInDirection(const sf::Time &elapsed, const sf::Keyboard::Key &key){
+
+        sf::Vector2f position=getPosition();
+        if (getFillColor()==sf::Color::Red && key==sf::Keyboard::A){
+            position.x -= x_velocity_*elapsed.asSeconds();
+            position.y = position.y;
+            setPosition(position);
+        }
+        if (getFillColor()==sf::Color::Red && key==sf::Keyboard::D){
+            position.x += x_velocity_*elapsed.asSeconds();
+            position.y = position.y;
+            setPosition(position);
+        }
+        if (getFillColor()==sf::Color::Red && key==sf::Keyboard::W){
+            position.x =position.x;
+            position.y -= y_velocity_*elapsed.asSeconds();
+            setPosition(position);
+        }
+        if (getFillColor()==sf::Color::Red && key==sf::Keyboard::S){
+            position.x = position.x;
+            position.y += y_velocity_*elapsed.asSeconds();
+            setPosition(position);
+        }
+    }
+
 private:
     int x_velocity_;
     int y_velocity_;
@@ -62,94 +83,82 @@ private:
 
     int left_,right_,top_,bottom_;
 
+    bool current_in_use;
 
-    void bounce(){
-        sf::Vector2f position= getPosition();
-        if (position.x<=left_){
-            x_velocity_=abs(x_velocity_);
-        }
-        if (position.x>=right_){
-            x_velocity_=-abs(x_velocity_);
-        }
-        if (position.y<=top_){
-            y_velocity_=abs(y_velocity_);
-        }
-        if (position.y>=bottom_){
-            y_velocity_=-abs(y_velocity_);
-        }
-    }
 
 
 };
 
 int main() {
+    sf::Clock clock;
+
     // create the window
     sf::RenderWindow window(sf::VideoMode(1000, 800), "My window");
 
-    // create some shapes
-    sf::CircleShape circle(100.0);
-    circle.setPosition(100.0, 300.0);
-    circle.setFillColor(sf::Color(100, 250, 50));
-
-
+    // for loop to create 15 rectangles in random spots
     sf::Vector2f size(120.0, 60.0);
-    sf::Vector2f position(120.0, 60.0);
-    CustomRectangleShape rectangle(size, position);
-    rectangle.setFillColor(sf::Color(100, 50, 250));
-    rectangle.setSpeed(100, 150, 10);
-    rectangle.setBounds(0, window.getSize().x, 0, window.getSize().y);
-
-    sf::ConvexShape triangle;
-    triangle.setPointCount(3);
-    triangle.setPoint(0, sf::Vector2f(0.0, 0.0));
-    triangle.setPoint(1, sf::Vector2f(0.0, 100.0));
-    triangle.setPoint(2, sf::Vector2f(140.0, 40.0));
-    triangle.setOutlineColor(sf::Color::Red);
-    triangle.setOutlineThickness(5);
-    triangle.setPosition(600.0, 100.0);
-
-    sf::Clock clock;
-
-
-
+    std::vector<CustomRectangleShape> rectangles;
+    for (int i = 0; i < 15; i++) {
+        sf::Vector2f size(120.0, 60.0);
+        sf::Vector2f position(std::rand() % (window.getSize().x - 120), std::rand() % (window.getSize().y - 60));
+        rectangles.emplace_back(CustomRectangleShape(size, position));
+    }
+    for (auto &rec : rectangles) {
+        rec.setFillColor(sf::Color::Green);
+        rec.setBounds(0, window.getSize().x, 0, window.getSize().y);
+        rec.setSpeed(500, 500, 500);
+    }
 
     // run the program as long as the window is open
     while (window.isOpen()) {
-
-
-
-
         // check all the window's events that were triggered since the last iteration of the loop
         sf::Event event;
         while (window.pollEvent(event)) {
             // "close requested" event: we close the window
-            if (event.type == sf::Event::Closed)
+            if (event.type == sf::Event::Closed) {
                 window.close();
+            }
+            if (event.type == sf::Event::MouseButtonPressed) {
+                // check if mouse click is inside the rectangle
+                for (int i = 0; i < 15; i++) {
+                    if (rectangles[i].getGlobalBounds().contains(sf::Vector2f(event.mouseButton.x, event.mouseButton.y))) {
+                        for (auto &r : rectangles) {
+                            r.setFillColor(sf::Color::Green);
+                        }
+                        // change the rectangle color to red
+                        rectangles[i].setFillColor(sf::Color::Red);
+                        rectangles[i].setIndex(i);
+                        break;
+                    }
+                }
+            }
         }
 
-        if(sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
-        {
-            std::cout << "Holding up button" << std::endl;
-        }
-
-        if(sf::Mouse::isButtonPressed(sf::Mouse::Middle))
-        {
-            std::cout << "Holding middle mouse button" << std::endl;
+        // move the rectangles in the selected direction
+        for (auto &rec : rectangles) {
+            if (rec.getIndex()==true){
+                if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A)){
+                    rec.moveInDirection(clock.restart(), sf::Keyboard::Key::A);
+                }
+                if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D)){
+                    rec.moveInDirection(clock.restart(), sf::Keyboard::Key::D);
+                }
+                if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W)){
+                    rec.moveInDirection(clock.restart(), sf::Keyboard::Key::W);
+                }
+                if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S)){
+                    rec.moveInDirection(clock.restart(), sf::Keyboard::Key::S);
+                }
+            }
         }
 
         // clear the window with black color
         window.clear(sf::Color::Black);
 
-        sf::Time elapsed = clock.restart();
-
-        rectangle.animate(elapsed);
-
-
         // draw everything here...
-        window.draw(circle);
-        window.draw(rectangle);
-        window.draw(triangle);
-
+        for (auto &rec : rectangles) {
+            window.draw(rec);
+        }
 
         // end the current frame
         window.display();
@@ -157,3 +166,5 @@ int main() {
 
     return 0;
 }
+
+
