@@ -1,190 +1,151 @@
-#include <SFML/Window.hpp>
-#include <SFML/Graphics.hpp>
-#include <vector>
 #include <iostream>
-#include "Lesson_5_SFML_Final_Assignment.h"
+#include <string>
+#include <vector>
 
-////TO CONTROL THE GUY IN THE MAZE USE W,S,A,D CONTROLS //////
+class Account {
+protected:
+    std::string accountNumber;
+    double balance;
 
+public:
+    Account(const std::string& accountNumber, double balance)
+        : accountNumber(accountNumber), balance(balance) {}
 
-void create_shapes(sf::RenderWindow& window, std::vector<std::unique_ptr<sf::Drawable>>& shapes_vec, std::vector<sf::Texture>& textures_) {
-    // create some shapes
-    ////BACKGROUND---->>>>
-
-    sf::Sprite background;
-    background.setTexture(textures_[0]);
-    background.setScale(0.5, 0.5);
-    background.setTextureRect(sf::IntRect(0, 0, 2 * window.getSize().x, 2 * window.getSize().x));
-
-    ////GUY------>>>
-
-    sf::Sprite guy;
-    guy.setTexture(textures_[1]);
-    guy.setTextureRect(sf::IntRect(10, 0, 25, 70));
-    ////WALLS----->>>>
-
-    sf::Sprite wall_1;
-    wall_1.setTexture(textures_[2]);
-    wall_1.setScale(0.3, 0.3);
-    wall_1.setTextureRect(sf::IntRect(0, 0, 70, 600));
-    wall_1.setPosition(200, 300);
-
-    sf::Sprite wall_2;
-    wall_2.setTexture(textures_[2]);
-    wall_2.setScale(0.3, 0.3);
-    wall_2.setTextureRect(sf::IntRect(0, 0, 70, 400));
-    wall_2.setPosition(400, 80);
-
-    sf::Sprite wall_3;
-    wall_3.setTexture(textures_[2]);
-    wall_3.setScale(0.3, 0.3);
-    wall_3.setTextureRect(sf::IntRect(0, 0, 400, 70));
-    wall_3.setPosition(200, 300);
-
-    sf::Sprite wall_4;
-    wall_4.setTexture(textures_[2]);
-    wall_4.setScale(0.3, 0.3);
-    wall_4.setTextureRect(sf::IntRect(0, 0, 800, 70));
-    wall_4.setPosition(500, 380);
-
-    shapes_vec.push_back(std::make_unique<sf::Sprite>(background));
-    shapes_vec.push_back(std::make_unique<sf::Sprite>(guy));
-    shapes_vec.push_back(std::make_unique<sf::Sprite>(wall_1));
-    shapes_vec.push_back(std::make_unique<sf::Sprite>(wall_2));
-    shapes_vec.push_back(std::make_unique<sf::Sprite>(wall_3));
-    shapes_vec.push_back(std::make_unique<sf::Sprite>(wall_4));
-}
-
-void input_texture(std::vector<sf::Texture>& textures_) {
-    sf::Texture texture_background;
-    if (!texture_background.loadFromFile("C:/grass.png")) {}
-    texture_background.setRepeated(true);
-    textures_.push_back(texture_background);
-
-    sf::Texture texture_guy;
-    if (!texture_guy.loadFromFile("C:/guy.png")) {
-        std::cerr << "Could not load texture" << std::endl;
+    void deposit(double amount) {
+        balance += amount;
+        std::cout << "Deposit successful. New balance: " << balance << std::endl;
     }
-    textures_.push_back(texture_guy);
 
-    sf::Texture texture_wall;
-    if (!texture_wall.loadFromFile("C:/wall.png")) {}
-    texture_wall.setRepeated(true);
-    textures_.push_back(texture_wall);
-}
+    void withdraw(double amount) {
+        if (balance >= amount) {
+            balance -= amount;
+            std::cout << "Withdrawal successful. New balance: " << balance << std::endl;
+        }
+        else {
+            std::cout << "Insufficient funds. Balance: " << balance << std::endl;
+        }
+    }
+
+    double getBalance() const {
+        return balance;
+    }
+
+    const std::string& getAccountNumber() const {
+        return accountNumber;
+    }
+};
+
+class CheckingAccount : public Account {
+public:
+    CheckingAccount(const std::string& accountNumber, double balance)
+        : Account(accountNumber, balance) {}
+
+    void withdraw(double amount) {
+        // Charge a $1.50 transaction fee for each withdrawal
+        double totalAmount = amount + 1.5;
+        if (balance >= totalAmount) {
+            balance -= totalAmount;
+            std::cout << "Withdrawal successful. New balance: " << balance << std::endl;
+        }
+        else {
+            std::cout << "Insufficient funds. Balance: " << balance << std::endl;
+        }
+    }
+};
+
+class SavingsAccount : public Account {
+protected:
+    double interestRate;
+
+public:
+    SavingsAccount(const std::string& accountNumber, double balance, double interestRate)
+        : Account(accountNumber, balance), interestRate(interestRate) {}
+
+    void addInterest() {
+        double interest = balance * interestRate / 100;
+        balance += interest;
+        std::cout << "Interest added. New balance: " << balance << std::endl;
+    }
+
+    double getInterestRate() const {
+        return interestRate;
+    }
+};
+
+class Client {
+private:
+    std::string name;
+    std::vector<Account*> accounts;
+
+public:
+    Client(const std::string& name)
+        : name(name) {}
+
+    void addAccount(Account* account) {
+        accounts.push_back(account);
+    }
+
+    void printAccounts() const {
+        std::cout << "Accounts for " << name << ":\n";
+        for (const auto& account : accounts) {
+            std::cout << account->getAccountNumber() << " - $" << account->getBalance() << "\n";
+        }
+    }
+
+    const std::string& getName() const {
+        return name;
+    }
+};
+
+class Bank {
+private:
+    std::vector<Client*> clients;
+
+public:
+    void addClient(Client* client) {
+        clients.push_back(client);
+    }
+
+    void printClients() const {
+        std::cout << "Clients:\n";
+        for (const auto& client : clients) {
+            std::cout << client->getName() << "\n";
+            client->printAccounts();
+            std::cout << "\n";
+        }
+    }
+};
 
 
 
 int main() {
-    sf::Clock clock;
-    // create the window
-    sf::RenderWindow window(sf::VideoMode(800, 600), "My window");
+    // Create accounts
+    Account account1("A10001", 5000);
+    SavingsAccount account2("S10001", 10000, 2.5);
+    CheckingAccount account3("C10001", 2000);
 
-    // creating vector to store different shapes and textures
-    std::vector<std::unique_ptr<sf::Drawable>> shapes;
-    std::vector<sf::Texture> textures;
+    // Deposit and withdraw from accounts
+    account1.deposit(1000);
+    account1.withdraw(2000);
+    account2.deposit(500);
+    account2.addInterest();
+    account3.withdraw(500);
 
-    input_texture(textures);
-    create_shapes(window, shapes, textures);
+    // Create clients and add accounts to them
+    Client client1("John Doe");
+    client1.addAccount(&account1);
+    client1.addAccount(&account2);
 
+    Client client2("Jane Smith");
+    client2.addAccount(&account3);
 
-    // run the program as long as the window is open
-    while (window.isOpen()) {
-        sf::Time elapsed = clock.restart();
-        // check all the window's events that were triggered since the last iteration of the loop
-        sf::Event event;
-        while (window.pollEvent(event)) {
-            // "close requested" event: we close the window
-            if (event.type == sf::Event::Closed)
-                window.close();
-        }
+    // Create bank and add clients to it
+    Bank bank;
+    bank.addClient(&client1);
+    bank.addClient(&client2);
 
-        auto guy = dynamic_cast<sf::Sprite*>(shapes[1].get());
-        auto wall_1 = dynamic_cast<sf::Sprite*>(shapes[2].get());
-        auto wall_2 = dynamic_cast<sf::Sprite*>(shapes[3].get());
-        auto wall_3 = dynamic_cast<sf::Sprite*>(shapes[4].get());
-        auto wall_4 = dynamic_cast<sf::Sprite*>(shapes[5].get());
-        sf::Vector2f position = guy->getPosition();
-        int x_velocity_=150;
-        int y_velocity_=150;
-
-
-
-
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A)){
-            if (wall_1->getGlobalBounds().intersects(guy->getGlobalBounds())||wall_2->getGlobalBounds().intersects(guy->getGlobalBounds())||
-                wall_3->getGlobalBounds().intersects(guy->getGlobalBounds())||wall_4->getGlobalBounds().intersects(guy->getGlobalBounds())){
-                position.x+=1;
-                guy->setPosition(position);
-
-            }
-            else{
-                if (position.x>0){
-                    position.x -= x_velocity_*elapsed.asSeconds();
-                    position.y = position.y;
-                    guy->setPosition(position);
-                }
-            }
-        }
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D)){
-            if (wall_1->getGlobalBounds().intersects(guy->getGlobalBounds())||wall_2->getGlobalBounds().intersects(guy->getGlobalBounds())||
-                wall_3->getGlobalBounds().intersects(guy->getGlobalBounds())||wall_4->getGlobalBounds().intersects(guy->getGlobalBounds())){
-                position.x-=1;
-                guy->setPosition(position);
-            }
-            else{
-                if (position.x+26<window.getSize().x){
-                    position.x += x_velocity_*elapsed.asSeconds();
-                    position.y = position.y;
-                    guy->setPosition(position);
-                }
-            }
-
-
-        }
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W)){
-            if (wall_1->getGlobalBounds().intersects(guy->getGlobalBounds())||wall_2->getGlobalBounds().intersects(guy->getGlobalBounds())||
-                wall_3->getGlobalBounds().intersects(guy->getGlobalBounds())||wall_4->getGlobalBounds().intersects(guy->getGlobalBounds())){
-                position.y+=1;
-                guy->setPosition(position);
-            }
-            else{
-                if (position.y>0){
-                    position.x =position.x;
-                    position.y -= y_velocity_*elapsed.asSeconds();
-                    guy->setPosition(position);
-                }
-            }
-
-        }
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S)){
-            if (wall_1->getGlobalBounds().intersects(guy->getGlobalBounds())||wall_2->getGlobalBounds().intersects(guy->getGlobalBounds())||
-                wall_3->getGlobalBounds().intersects(guy->getGlobalBounds())||wall_4->getGlobalBounds().intersects(guy->getGlobalBounds())){
-                position.y-=1;
-                guy->setPosition(position);
-            }
-            else{
-                if (position.y+70<window.getSize().y){
-                    position.x = position.x;
-                    position.y += y_velocity_*elapsed.asSeconds();
-                    guy->setPosition(position);
-                }
-            }
-
-        }
-
-        // clear the window with black color
-        window.clear(sf::Color::Black);
-
-        // draw everything here...
-        for (auto& s : shapes) {
-            window.draw(*s);
-        }
-        // end the current frame
-        window.display();
-    }
+    // Print bank clients and their accounts
+    bank.printClients();
 
     return 0;
 }
-
-    //
