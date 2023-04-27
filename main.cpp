@@ -1,151 +1,185 @@
+#include <bits/stdc++.h>
 #include <iostream>
-#include <string>
 #include <vector>
+#include<memory>
+#include <string>
+//using namespace std;
 
-class Account {
+class ElectronicDevice{
 protected:
-    std::string accountNumber;
-    double balance;
-
+    std::string brand;
+    std::string model;
 public:
-    Account(const std::string& accountNumber, double balance)
-        : accountNumber(accountNumber), balance(balance) {}
-
-    void deposit(double amount) {
-        balance += amount;
-        std::cout << "Deposit successful. New balance: " << balance << std::endl;
-    }
-
-    void withdraw(double amount) {
-        if (balance >= amount) {
-            balance -= amount;
-            std::cout << "Withdrawal successful. New balance: " << balance << std::endl;
-        }
-        else {
-            std::cout << "Insufficient funds. Balance: " << balance << std::endl;
-        }
-    }
-
-    double getBalance() const {
-        return balance;
-    }
-
-    const std::string& getAccountNumber() const {
-        return accountNumber;
+    ElectronicDevice(std::string brand,std::string model):brand(brand),model(model) {}
+    void display(){
+        std::cout<<brand<<" "<<model<<std::endl;
     }
 };
 
-class CheckingAccount : public Account {
-public:
-    CheckingAccount(const std::string& accountNumber, double balance)
-        : Account(accountNumber, balance) {}
 
-    void withdraw(double amount) {
-        // Charge a $1.50 transaction fee for each withdrawal
-        double totalAmount = amount + 1.5;
-        if (balance >= totalAmount) {
-            balance -= totalAmount;
-            std::cout << "Withdrawal successful. New balance: " << balance << std::endl;
-        }
-        else {
-            std::cout << "Insufficient funds. Balance: " << balance << std::endl;
-        }
+class Store{
+private:
+std::vector<std::unique_ptr<ElectronicDevice>> devices;
+public:
+void addDevice(std::unique_ptr<ElectronicDevice> device){
+    devices.emplace_back(std::move(device));
+}
+void displayDevices(){
+    for(auto& device: devices){
+        device->display();
     }
+}
 };
 
-class SavingsAccount : public Account {
+
+class Smartwatch: public ElectronicDevice{
+
 protected:
-    double interestRate;
-
+    bool hasGPS;
 public:
-    SavingsAccount(const std::string& accountNumber, double balance, double interestRate)
-        : Account(accountNumber, balance), interestRate(interestRate) {}
-
-    void addInterest() {
-        double interest = balance * interestRate / 100;
-        balance += interest;
-        std::cout << "Interest added. New balance: " << balance << std::endl;
-    }
-
-    double getInterestRate() const {
-        return interestRate;
-    }
-};
-
-class Client {
-private:
-    std::string name;
-    std::vector<Account*> accounts;
-
-public:
-    Client(const std::string& name)
-        : name(name) {}
-
-    void addAccount(Account* account) {
-        accounts.push_back(account);
-    }
-
-    void printAccounts() const {
-        std::cout << "Accounts for " << name << ":\n";
-        for (const auto& account : accounts) {
-            std::cout << account->getAccountNumber() << " - $" << account->getBalance() << "\n";
+    Smartwatch(std::string brand,std::string model,bool hasGPS): ElectronicDevice(brand,model), hasGPS(hasGPS){}
+    void dispy(){
+        if(hasGPS){
+            std::cout<<"Smart Watch has GPS";
         }
-    }
-
-    const std::string& getName() const {
-        return name;
-    }
-};
-
-class Bank {
-private:
-    std::vector<Client*> clients;
-
-public:
-    void addClient(Client* client) {
-        clients.push_back(client);
-    }
-
-    void printClients() const {
-        std::cout << "Clients:\n";
-        for (const auto& client : clients) {
-            std::cout << client->getName() << "\n";
-            client->printAccounts();
-            std::cout << "\n";
+        else{
+            std::cout<<"Smart Watch hasn't GPS";
         }
     }
 };
+
+class Smartphone:public ElectronicDevice{
+protected:
+    int storageCapacity;
+public:
+    Smartphone(std::string brand,std::string model,int storageCapacity): ElectronicDevice(brand,model), storageCapacity(storageCapacity){}
+
+    void display(){
+        std::cout<<storageCapacity<<std::endl;
+    }
+};
+
+class Laptop :public ElectronicDevice{
+protected:
+int ramSize;
+
+public:
+Laptop(std::string brand,std::string model,int ramSize): ElectronicDevice(brand,model), ramSize(ramSize){}
+
+void display(){
+    std::cout<<ramSize<<std::endl;
+}
+
+};
+
+
+class GamingLaptop : public Laptop{
+protected:
+    std::string gpuModel;
+public:
+    GamingLaptop(std::string brand,std::string model,int ramSize, std::string gpuModel):Laptop(brand,model,ramSize), gpuModel(gpuModel){}
+
+    void display(){
+        std::cout<<gpuModel<<std::endl;
+    }
+};
+
+
+
+
 
 
 
 int main() {
-    // Create accounts
-    Account account1("A10001", 5000);
-    SavingsAccount account2("S10001", 10000, 2.5);
-    CheckingAccount account3("C10001", 2000);
-
-    // Deposit and withdraw from accounts
-    account1.deposit(1000);
-    account1.withdraw(2000);
-    account2.deposit(500);
-    account2.addInterest();
-    account3.withdraw(500);
-
-    // Create clients and add accounts to them
-    Client client1("John Doe");
-    client1.addAccount(&account1);
-    client1.addAccount(&account2);
-
-    Client client2("Jane Smith");
-    client2.addAccount(&account3);
-
-    // Create bank and add clients to it
-    Bank bank;
-    bank.addClient(&client1);
-    bank.addClient(&client2);
-
-    // Print bank clients and their accounts
-    bank.printClients();
 
     return 0;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//class Time {
+//public:
+//    Time(int hours = 0, int minutes = 0, int seconds = 0) {
+//        hours_=hours;
+//        minutes_ = minutes;
+//        seconds_ = seconds;
+//    }
+
+//  friend ostream &operator<<(ostream &str,Time &rhs){
+//       if(rhs.hours_==0&&rhs.minutes_==0){
+//           str<<rhs.seconds_<<"s"<<endl;
+//       }else if(rhs.hours_==0){
+//           str<<rhs.minutes_<<"m:"<<rhs.seconds_<<"s"<<endl;
+//       }else{
+//           str<<rhs.hours_<<"h:"<<rhs.minutes_<<"m:"<<rhs.seconds_<<"s"<<endl;
+//       }
+//        return str;
+//    }
+//  Time operator+(const Time &rhs)const{
+//      return Time(((hours_+rhs.hours_)*3600)+((minutes_+rhs.minutes_)*60)+seconds_+rhs.seconds_);
+//  }
+//  Time operator-(const Time &rhs)const{
+//      return Time(((hours_-rhs.hours_)*3600)+((minutes_-rhs.minutes_)*60)+(seconds_-rhs.seconds_));
+//  }
+//  bool operator==(const Time &rhs)const{
+//      return (hours_==rhs.hours_&&minutes_==rhs.minutes_&&seconds_==rhs.minutes_);
+//  }
+//private:
+//    int hours_, minutes_,seconds_;
+//};
+
+//int main() {
+//    Time time1(3, 15, 45);
+//    Time time2(1, 50, 30);
+
+//    cout << "Time 1: " << time1 << endl;
+//    cout << "Time 2: " << time2 << endl;
+
+//   Time sum = time1 + time2;
+//   cout << "Sum: " << sum << endl;
+
+//   Time difference = time1 - time2;
+//   cout << "Difference: " << difference << endl;
+
+//   bool areEqual = time1 == time2;
+//   cout << "Are equal? " << (areEqual ? "Yes" : "No") << endl;
+
+//   return 0;
+
+//}
